@@ -14,12 +14,26 @@ HEIGHT = 700
 # สร้างสี RGB
 BLACK = (0,0,0)
 GREEN = (0,255,0)
+WHITE = (255,255,255)
+
+# คะแนนเมื่อยิงโดน
+SCORE = 0
+# ชีวิต
+LIVES = 3
+
 
 # สร้างสกรีนหรือกล่องสำหรับใส่เกม
 screen = pygame.display.set_mode((WIDTH,HEIGHT))
 
 # สร้างชื่อเกม
 pygame.display.set_caption('My First Game by Uncle Engineer')
+
+# background
+
+bg = 'C:\\Users\\Uncle Engineer\\Desktop\\PyGame\\First Game\\background.png'
+background = pygame.image.load(bg).convert_alpha()
+background_rect = background.get_rect()
+
 
 # สร้างนาฬิกาของเกม
 clock = pygame.time.Clock()
@@ -102,6 +116,7 @@ class Player(pygame.sprite.Sprite):
 	def shoot(self):
 		bullet = Bullet(self.rect.centerx, self.rect.top)
 		all_sprites.add(bullet)
+		group_bullet.add(bullet)
 
 
 
@@ -133,11 +148,20 @@ class Bullet(pygame.sprite.Sprite):
 			self.kill()
 
 
+font_name = pygame.font.match_font('arial')
+def draw_text(screen,text,size,x,y):
+	font = pygame.font.Font(font_name,size)
+	text_surface = font.render(text,True,WHITE)
+	text_rect = text_surface.get_rect()
+	text_rect.topleft = (x,y)
+	screen.blit(text_surface,text_rect)
 
-
+# draw_text(screen, 'SCORE: 100', 30, WIDTH-100, 10)
 
 # สร้างกลุ่ม Sprite
 all_sprites = pygame.sprite.Group() #กล่องสำหรับเก็บตัวละคร
+group_enemy = pygame.sprite.Group() #กล่องสำหรับเก็บศัตรู
+group_bullet = pygame.sprite.Group() #กล่องสำหรับใส่กระสุน
 
 # player
 player = Player() # สร้างตัวละคร
@@ -147,6 +171,7 @@ all_sprites.add(player) # เพิ่มตัวละครเข้าไป
 for i in range(5):
 	enemy = Enemy()
 	all_sprites.add(enemy)
+	group_enemy.add(enemy)
 
 # สถานะของเกม 
 running = True # True = YES , False = No
@@ -167,8 +192,37 @@ while running:
 
 	all_sprites.update()
 
+	# ตรวจสอบการชนกันของ Sprite ด้วยฟังชั่น collide
+	collide = pygame.sprite.spritecollide(player, group_enemy, False) 
+	print(collide)
+
+	# if collide:
+	# 	LIVES -= 1
+	# 	print(LIVES)
+
+	if collide:
+		# หากมีการชนกัน จะปิดโปรแกรมทันที
+		running = False
+
+
+	# bullet collission
+	hits = pygame.sprite.groupcollide(group_bullet, group_enemy, True, True)
+	# print('Bullet:',hits)
+	for h in hits:
+		enemy = Enemy()
+		all_sprites.add(enemy)
+		group_enemy.add(enemy)
+		# add score
+		SCORE += 10 # SCORE = SCORE + 1
+
 	# ใส่สีแบกกราวของเกม
 	screen.fill(BLACK)
+
+	screen.blit(background,background_rect)
+
+	# update score
+	draw_text(screen, 'SCORE: {}'.format(SCORE) , 30, WIDTH-300, 10)
+	draw_text(screen, 'Lives: {}'.format(LIVES) , 20, 100, 10)
 
 	# นำตัวละครทั้งหมดมาวาดใส่เกม
 	all_sprites.draw(screen)
